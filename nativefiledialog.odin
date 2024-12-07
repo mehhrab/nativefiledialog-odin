@@ -12,6 +12,7 @@ when ODIN_OS == .Windows {
 } else when ODIN_OS == .Linux  {
 	foreign import lib {
 		"linux/libnativefiledialog.a",
+		"system:dbus-1",
 		"system:dl",
 		"system:pthread",
 	}
