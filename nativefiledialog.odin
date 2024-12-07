@@ -17,14 +17,10 @@ when ODIN_OS == .Windows {
 	}
 }
 
+INTERFACE_VERSION :: 1
+
 when ODIN_OS == .Windows {
 	Path_Set_Size :: distinct u64
-
-	Path_Set :: struct {
-		ptr: rawptr,
-	}
-} else when ODIN_OS == .Linux {
-	Path_Set_Size :: distinct u32
 
 	Path_Set :: struct {
 		d1: rawptr,
@@ -41,6 +37,12 @@ when ODIN_OS == .Windows {
 		p1: i32,
 		p2: rawptr,
 		p3: rawptr,
+	}
+} else when ODIN_OS == .Linux {
+	Path_Set_Size :: distinct u32
+
+	Path_Set :: struct {
+		ptr: rawptr,
 	}
 }
 
@@ -72,14 +74,14 @@ Window_Handle :: struct {
 Version :: distinct int
 
 Open_Dialog_Args :: struct {
-	filter_list: Filter_Item,
+	filter_list: [^]Filter_Item,
 	filter_count: Filter_Size,
 	default_path: cstring,
 	parent_window: Window_Handle,
 }
 
 Save_Dialog_Args :: struct {
-	filter_list: Filter_Item,
+	filter_list: [^]Filter_Item,
 	filter_count: Filter_Size,
 	default_path: cstring,
 	default_name: cstring,
@@ -101,25 +103,25 @@ foreign lib {
 	
 	OpenDialogN :: proc(out_path: ^cstring, filter_list: [^]Filter_Item, filter_count: Filter_Size, default_path: cstring) -> Result ---
 	OpenDialogU8 :: proc(out_path: ^cstring, filter_list: [^]Filter_Item, filter_count: Filter_Size, default_path: cstring) -> Result ---
-	OpenDialogN_With :: proc(out_path: ^cstring, args: ^Open_Dialog_Args) -> Result --- // check later
-	OpenDialogU8_With :: proc(out_path: ^cstring, args: ^Open_Dialog_Args) -> Result --- // check later
+	OpenDialogN_With_Impl :: proc(version: Version, out_path: ^cstring, args: ^Open_Dialog_Args) -> Result ---
+	OpenDialogU8_With_Impl :: proc(version: Version, out_path: ^cstring, args: ^Open_Dialog_Args) -> Result ---
 	OpenDialogMultipleN :: proc(out_paths: [^]cstring, filter_list: [^]Filter_Item, filter_count: Filter_Size, default_path: cstring) -> Result ---
-	OpenDialogMultipleN_With :: proc(out_paths: [^]cstring, args: ^Open_Dialog_Args) -> Result --- // check later
-	OpenDialogMultipleU8_With :: proc(out_paths: [^]cstring, args: Filter_Size) -> Result --- // check later
+	OpenDialogMultipleN_With_Impl :: proc(version: Version, out_paths: [^]cstring, args: ^Open_Dialog_Args) -> Result ---
+	OpenDialogMultipleU8_With_Impl :: proc(version: Version, out_paths: [^]cstring, args: ^Open_Dialog_Args) -> Result ---
 	
 	SaveDialogN :: proc(out_path: ^cstring, filter_list: [^]Filter_Item, filter_count: Filter_Size, default_path: cstring, default_name: cstring) -> Result ---
 	SaveDialogU8 :: proc(out_path: ^cstring, filter_list: [^]Filter_Item, filter_count: Filter_Size, default_path: cstring, default_name: cstring) -> Result ---
-	SaveDialogN_With :: proc(out_path: ^cstring, args: ^Save_Dialog_Args) -> Result ---
-	SaveDialogU8_With :: proc(out_path: ^cstring, args: ^Save_Dialog_Args) -> Result ---
+	SaveDialogN_With_Impl :: proc(version: Version, out_path: ^cstring, args: ^Save_Dialog_Args) -> Result ---
+	SaveDialogU8_With_Impl :: proc(version: Version, out_path: ^cstring, args: ^Save_Dialog_Args) -> Result ---
 	
 	PickFolderN :: proc(out_path: ^cstring, default_path: cstring) -> Result ---
 	PickFolderU8 :: proc(out_path: ^cstring, default_path: cstring) -> Result ---
-	PickFolderN_With :: proc(out_path: ^cstring, args: ^Pick_Folder_Args) -> Result --- // check later
-	PickFolderU8_With :: proc(out_path: ^cstring, args: ^Pick_Folder_Args) -> Result --- // check later
-	PickFolderMultipleN :: proc(out_path: ^cstring, default_path: cstring) -> Result --- // check later
+	PickFolderN_With_Impl :: proc(version: Version, out_path: ^cstring, args: ^Pick_Folder_Args) -> Result ---
+	PickFolderU8_With_Impl :: proc(version: Version, out_path: ^cstring, args: ^Pick_Folder_Args) -> Result ---
+	PickFolderMultipleN :: proc(out_path: ^cstring, default_path: cstring) -> Result ---
 	PickFolderMultipleU8 :: proc(out_path: [^]cstring, default_path: cstring) -> Result ---
-	PickFolderMultipleN_With :: proc(out_path: [^]cstring, args: ^Pick_Folder_Args) -> Result --- // check later
-	PickFolderMultipleU8_With :: proc(out_paths: [^]cstring, args: ^Pick_Folder_Args) -> Result --- // check later
+	PickFolderMultipleN_With_Impl :: proc(version: Version, out_paths: [^]cstring, args: ^Pick_Folder_Args) -> Result ---
+	PickFolderMultipleU8_With_Impl :: proc(version: Version, out_paths: [^]cstring, args: ^Pick_Folder_Args) -> Result ---
 	
 	PathSet_GetCount :: proc(path_set: ^Path_Set, count: ^Path_Set_Size) -> Result ---
 	PathSet_GetPathN :: proc(path_set: ^Path_Set, index: Path_Set_Size, outpath: ^cstring) -> Result ---
@@ -134,4 +136,46 @@ foreign lib {
 	
 	GetError :: proc() -> cstring ---
 	ClearError :: proc() ---
+}
+
+OpenDialogN_With :: proc(out_path: ^cstring, args: ^Open_Dialog_Args) -> Result {
+	return OpenDialogN_With_Impl(INTERFACE_VERSION, out_path, args)
+}
+
+OpenDialogU8_With :: proc(out_path: ^cstring, args: ^Open_Dialog_Args) -> Result {
+	return OpenDialogU8_With_Impl(INTERFACE_VERSION, out_path, args)
+}
+
+OpenDialogMultipleN_With :: proc(out_paths: [^]cstring, args: ^Open_Dialog_Args) -> Result {
+	return OpenDialogMultipleN_With_Impl(INTERFACE_VERSION, out_paths, args)
+}
+
+OpenDialogMultipleU8_With :: proc(version: Version, out_paths: [^]cstring, args: ^Open_Dialog_Args) -> Result {
+	return OpenDialogMultipleU8_With_Impl(INTERFACE_VERSION, out_paths, args)
+}
+
+
+SaveDialogN_With :: proc(out_path: ^cstring, args: ^Save_Dialog_Args) -> Result {
+	return SaveDialogN_With_Impl(INTERFACE_VERSION, out_path, args)
+}
+
+SaveDialogU8_With :: proc(out_path: ^cstring, args: ^Save_Dialog_Args) -> Result {
+	return SaveDialogU8_With_Impl(INTERFACE_VERSION, out_path, args)
+}
+
+
+PickFolderN_With :: proc(out_path: ^cstring, args: ^Pick_Folder_Args) -> Result {
+	return PickFolderN_With_Impl(INTERFACE_VERSION, out_path, args)
+}
+
+PickFolderU8_With :: proc(out_path: ^cstring, args: ^Pick_Folder_Args) -> Result {
+	return PickFolderU8_With_Impl(INTERFACE_VERSION, out_path, args)
+}
+
+PickFolderMultipleN_With :: proc(version: Version, out_paths: [^]cstring, args: ^Pick_Folder_Args) -> Result {
+	return PickFolderMultipleN_With_Impl(INTERFACE_VERSION, out_paths, args)
+}
+
+PickFolderMultipleU8_With :: proc(version: Version, out_paths: [^]cstring, args: ^Pick_Folder_Args) -> Result {
+	return PickFolderMultipleU8_With_Impl(INTERFACE_VERSION, out_paths, args)
 }
