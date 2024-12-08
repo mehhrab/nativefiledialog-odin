@@ -7,24 +7,26 @@
 import nfd "./nativefiledialog"
 import "core:fmt"
 
-nfd.Init()
-defer nfd.Quit()
-
-path: cstring
-filters := [2]nfd.Filter_Item { { "Source code", "c,cpp,cc" }, { "Headers", "h,hpp" } }
-args := nfd.Open_Dialog_Args {
-    filter_list = raw_data(filters[:])
-    filter_count = len(filters)
-}
-
-result := nfd.OpenDialogU8_With(&path, &args)
-switch result {
-    case .Okay: {
-        fmt.println("Success!")
-        fmt.println(path)
-        nfd.FreePathU8(path)
+main :: proc() {
+    nfd.Init()
+    defer nfd.Quit()
+    
+    path: cstring
+    filters := [2]nfd.Filter_Item { { "Source code", "c,cpp,cc" }, { "Headers", "h,hpp" } }
+    args := nfd.Open_Dialog_Args {
+        filter_list = raw_data(filters[:])
+        filter_count = len(filters)
     }
-    case .Cancel: fmt.println("User pressed cancel.")
-    case .Error: fmt.println("Error:", nfd.GetError())
+    
+    result := nfd.OpenDialogU8_With(&path, &args)
+    switch result {
+        case .Okay: {
+            fmt.println("Success!")
+            fmt.println(path)
+            nfd.FreePathU8(path)
+        }
+        case .Cancel: fmt.println("User pressed cancel.")
+        case .Error: fmt.println("Error:", nfd.GetError())
+    }
 }
 ```
