@@ -14,7 +14,7 @@ main :: proc() {
     path: cstring
     filters := [2]nfd.Filter_Item { { "Source code", "c,cpp,cc" }, { "Headers", "h,hpp" } }
     args := nfd.Open_Dialog_Args {
-        filter_list = raw_data(filters[:])
+        filter_list = raw_data(filters[:]),
         filter_count = len(filters)
     }
     
